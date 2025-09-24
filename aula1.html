@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galeria VR - Personagens 3D com Chuva e Neve</title>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.loaders.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000;
+            height: 100vh;
+            width: 100vw;
+            touch-action: none;
+        }
+
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0f1e, #0a1429, #091832);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: white;
+            transition: opacity 0.8s ease-out;
+        }
+        
+        #loading-title {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            text-align: center;
+            text-shadow: 0 0 12px rgba(0, 168, 255, 0.8);
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(0, 168, 255, 0.3);
+            border-top: 5px solid #00a8ff;
+            border-radius: 50%;
+            animation: spin 1.2s linear infinite;
+            margin: 20px 0;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        #loading-message {
+            margin-top: 15px;
+            font-size: 1rem;
+            color: #aaa;
+            max-width: 80%;
+            text-align: center;
+        }
+
+        .character-info {
+            position: fixed;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 2px solid #00a8ff;
+            min-width: 200px;
+            text-align: center;
+            z-index: 100;
+            color: white;
+            font-size: 1rem;
+            transition: opacity 0.5s ease;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 0 15px rgba(0, 168, 255, 0.3);
+        }
+
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .confirm-btn-3d {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .confirm-btn-3d:hover {
+            transform: scale(1.05);
+        }
+
+        .confirm-btn-3d .ring {
+            transition: all 0.3s ease;
+        }
+
+        .confirm-btn-3d:hover .ring {
+            color: #00ffaa;
+        }
+        
+        #instructions {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: white;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            z-index: 10;
+            font-size: 0.9rem;
+            border-top: 1px solid #00a8ff;
+            transition: opacity 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-overlay">
+        <h1 id="loading-title">CARREGANDO GALERIA VR</h1>
+        <div class="loading-spinner"></div>
+        <div id="loading-message">Preparando personagens 3D...</div>
+    </div>
+    
+    <div class="character-info hidden" id="character-info">
+        <span id="current-character">Dragão de Gelo</span>
+    </div>
+
+    <a-scene loading-screen="enabled: false" 
+             cursor="rayOrigin: mouse"
+             renderer="antialias: false; precision: low">
+        <!-- Assets pré-carregados -->
+        <a-assets>
+            <img id="ceu" src="img 360.jpeg" crossorigin="anonymous">
+            
+            <!-- Modelos dos personagens (removido o robô) -->
+            <a-asset-item id="char1-obj" src="Modelos 3D/dragaodegelo.obj" crossorigin="anonymous"></a-asset-item>
+            <a-asset-item id="char1-mtl" src="Modelos 3D/dragaodegelo.mtl" crossorigin="anonymous"></a-asset-item>
+            
+            <a-asset-item id="char2-obj" src="Modelos 3D/dragaodefogo.obj" crossorigin="anonymous"></a-asset-item>
+            <a-asset-item id="char2-mtl" src="Modelos 3D/dragaodefogo.mtl" crossorigin="anonymous"></a-asset-item>
+            
+            <a-asset-item id="char3-obj" src="Modelos 3D/Lushflower.obj" crossorigin="anonymous"></a-asset-item>
+            <a-asset-item id="char3-mtl" src="Modelos 3D/lushflower.mtl" crossorigin="anonymous"></a-asset-item>
+        </a-assets>
+
+        <!-- Skybox com imagem 360 -->
+        <a-sky src="#ceu" rotation="0 90 0"></a-sky>
+
+        <!-- Ambiente simplificado -->
+        <a-entity id="environment">
+            <!-- Chão -->
+            <a-circle position="0 0 -5" radius="10" color="#222" rotation="-90 0 0" segments-radial="16"></a-circle>
+            
+            <!-- Plataforma central -->
+            <a-cylinder position="0 0.1 -5" radius="2" height="0.2" color="#1a1a2e" segments-radial="16"></a-cylinder>
+            <a-circle position="0 0.2 -5" radius="2" color="#0f3460" opacity="0.6" rotation="-90 0 0"></a-circle>
+        </a-entity>
+
+        <!-- Objeto 3D central com animação de rotação -->
+        <a-entity id="model-container"
+                  position="0 1.2 -5"
+                  scale="0.15 0.15 0.15"
+                  rotation="0 0 0"
+                  animation="property: rotation; to: 0 360 0; loop: true; dur: 20000; easing: linear">
+            <!-- Modelo será inserido aqui via JavaScript -->
+        </a-entity>
+
+        <!-- Sistema de partículas (chuva/neve) -->
+        <a-entity id="weather-system">
+            <!-- 50 partículas reutilizáveis serão criadas via JavaScript -->
+        </a-entity>
+
+        <!-- Caixa de informações do personagem-->
+        <a-entity id="info-panel" position="0 3.5 -3.5" rotation="0 0 0">
+            <a-plane position="0 1.6 0" width="3.2" height="1.4" color="#0a0f1e" opacity="0.85"></a-plane>
+            <a-text id="char-name" value="Dragão de Gelo" 
+                    position="0 2.0 0.01" 
+                    align="center" 
+                    width="3" 
+                    color="#00a8ff"
+                    font="mozillavr"
+                    font-size="38"></a-text>
+            <a-text id="char-desc" value="Guardião das montanhas geladas" 
+                    position="0 1.6 0.01" 
+                    align="center" 
+                    width="3" 
+                    color="#fff"
+                    font="mozillavr"
+                    wrap-count="30"
+                    font-size="28"></a-text>
+        </a-entity>
+
+        <!-- Setas de navegação (posição ajustada) -->
+        <a-entity id="left-arrow" position="-2.5 1.2 -5" class="clickable arrow">
+            <a-cone rotation="0 0 90" radius-top="0.05" radius-bottom="0.2" height="0.4" color="#00a8ff"></a-cone>
+            <a-ring rotation="90 0 0" radius-inner="0.3" radius-outer="0.4" color="#00a8ff" opacity="0.5"></a-ring>
+            <a-text value="Anterior" position="0 -0.7 0" align="center" color="#fff" scale="0.8 0.8 0.8"></a-text>
+        </a-entity>
+        
+        <a-entity id="right-arrow" position="2.5 1.2 -5" class="clickable arrow">
+            <a-cone rotation="0 0 -90" radius-top="0.05" radius-bottom="0.2" height="0.4" color="#00a8ff"></a-cone>
+            <a-ring rotation="90 0 0" radius-inner="0.3" radius-outer="0.4" color="#00a8ff" opacity="0.5"></a-ring>
+            <a-text value="Próximo" position="0 -0.7 0" align="center" color="#fff" scale="0.8 0.8 0.8"></a-text>
+        </a-entity>
+        
+        <!-- Botão de confirmação na cena 3D -->
+        <a-entity id="scene-confirm-btn" position="4.5 0.9 -4.2" class="clickable confirm-btn-3d">
+            <a-ring class="ring" radius-inner="0.6" radius-outer="0.8" color="#00a8ff" position="0 0 0"></a-ring>
+            <a-circle radius="0.7" color="#0a0f1e" position="0 0 0.01"></a-circle>
+            <a-text value="CONFIRMAR" position="0 -0.1 0.02" align="center" color="#fff" width="2"></a-text>
+        </a-entity>
+
+        <!-- Câmera ajustada -->
+        <a-entity camera="fov: 80" look-controls="pointerLockEnabled: true" position="0 1.6 3">
+            <a-cursor fuse="true" fuse-timeout="800"></a-cursor>
+        </a-entity>
+
+        <!-- Instruções integradas (posição ajustada) -->
+        <a-text value="Use as setas para navegar" 
+                position="0 -1.5 -3.5" 
+                align="center" 
+                color="#ddd" 
+                width="4"
+                font-size="32">
+        </a-text>
+        
+        <!-- Nova instrução para o botão de confirmação -->
+        <a-text value="Clique no botão CONFIRMAR para selecionar" 
+                position="0 -2.0 -3.5" 
+                align="center" 
+                color="#ddd" 
+                width="6"
+                font-size="24">
+        </a-text>
+    </a-scene>
+
+    <div id="instructions" class="hidden">
+        Use as setas para navegar entre os personagens | Movimento: mouse ou setas
+    </div>
+
+    <script>
+        // Configurações padronizadas para todos os personagens
+        const CHARACTER_CONFIG = {
+            scale: "0.15 0.15 0.15",
+            position: "0 0 0", // Posição relativa ao container
+            animation: {
+                property: "rotation",
+                to: "0 360 0",
+                loop: true,
+                dur: 20000,
+                easing: "linear"
+            }
+        };
+
+        // Lista de personagens com rotações personalizadas (removido o robô)
+        const characters = [
+            {
+                id: 1,
+                name: "Dragão de Gelo",
+                description: "Guardião das montanhas geladas, capaz de congelar tudo ao seu redor com um único sopro.",
+                model: {
+                    obj: "#char1-obj",
+                    mtl: "#char1-mtl"
+                },
+                rotation: "-90 180 180", // Rotação mantida
+                ...CHARACTER_CONFIG
+            },
+            {
+                id: 2,
+                name: "Dragão de Fogo",
+                description: "Senhor dos vulcões, com escamas que brilham como lava e respiração de fogo.",
+                model: {
+                    obj: "#char2-obj",
+                    mtl: "#char2-mtl"
+                },
+                rotation: "-90 0 0", // Rotação mantida
+                ...CHARACTER_CONFIG
+            },
+            {
+                id: 3,
+                name: "Flor Luminosa",
+                description: "Planta mágica que emana energia vital e ilumina as florestas mais escuras.",
+                model: {
+                    obj: "#char3-obj",
+                    mtl: "#char3-mtl"
+                },
+                rotation: "-90 0 0", // Rotação mantida
+                ...CHARACTER_CONFIG
+            }
+        ];
+
+        // Estado atual
+        let currentCharacterIndex = 0;
+
+        // Sistema de carregamento
+        document.addEventListener('DOMContentLoaded', () => {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const instructions = document.getElementById('instructions');
+            const characterInfo = document.getElementById('character-info');
+            const loadingMessage = document.getElementById('loading-message');
+            const scene = document.querySelector('a-scene');
+            
+            // Elementos da cena
+            const modelContainer = document.getElementById('model-container');
+            const leftArrow = document.getElementById('left-arrow');
+            const rightArrow = document.getElementById('right-arrow');
+            const charName = document.getElementById('char-name');
+            const charDesc = document.getElementById('char-desc');
+            const sceneConfirmBtn = document.getElementById('scene-confirm-btn');
+            
+            // Quando a cena estiver carregada
+            scene.addEventListener('loaded', function() {
+                // Carregar primeiro personagem
+                loadCharacter(currentCharacterIndex);
+                
+                // Remover loader
+                setTimeout(() => {
+                    loadingOverlay.style.opacity = '0';
+                    setTimeout(() => {
+                        loadingOverlay.style.display = 'none';
+                        instructions.classList.remove('hidden');
+                        characterInfo.classList.remove('hidden');
+                    }, 800);
+                }, 1500);
+                
+                // Iniciar sistema de clima após 2 segundos
+                setTimeout(initWeatherSystem, 2000);
+            });
+            
+            // Atualizar mensagem de carregamento
+            setTimeout(() => {
+                loadingMessage.textContent = "Carregando modelos 3D...";
+            }, 2000);
+            
+            // Evento para seta esquerda
+            leftArrow.addEventListener('click', () => {
+                currentCharacterIndex = (currentCharacterIndex - 1 + characters.length) % characters.length;
+                loadCharacter(currentCharacterIndex);
+                animateArrows('left');
+            });
+            
+            // Evento para seta direita
+            rightArrow.addEventListener('click', () => {
+                currentCharacterIndex = (currentCharacterIndex + 1) % characters.length;
+                loadCharacter(currentCharacterIndex);
+                animateArrows('right');
+            });
+            
+            // Evento para botão de confirmação na cena (agora usa alert padrão)
+            sceneConfirmBtn.addEventListener('click', () => {
+                const character = characters[currentCharacterIndex];
+                // Usando alert padrão do navegador
+                alert(`Personagem selecionado: ${character.name}`);
+            });
+            
+            // Função para carregar personagem
+            function loadCharacter(index) {
+                const character = characters[index];
+                
+                // Atualizar informações do personagem
+                document.getElementById('current-character').textContent = character.name;
+                charName.setAttribute('value', character.name);
+                charDesc.setAttribute('value', character.description);
+                
+                // Limpar container
+                modelContainer.innerHTML = '';
+                
+                // Criar container interno para o modelo
+                const innerContainer = document.createElement('a-entity');
+                innerContainer.setAttribute('position', character.position);
+                innerContainer.setAttribute('rotation', character.rotation);
+                
+                // Criar novo modelo com rotação personalizada
+                const newModel = document.createElement('a-entity');
+                newModel.setAttribute('obj-model', `obj: ${character.model.obj}; mtl: ${character.model.mtl}`);
+                newModel.setAttribute('scale', character.scale);
+                newModel.setAttribute('data-character', `char-${character.id}`);
+                
+                // Adicionar o modelo ao container interno
+                innerContainer.appendChild(newModel);
+                
+                // Adicionar o container interno ao container principal
+                modelContainer.appendChild(innerContainer);
+                
+                // Atualizar animação de rotação
+                modelContainer.setAttribute('animation', CHARACTER_CONFIG.animation);
+                
+                // Feedback visual
+                modelContainer.setAttribute('animation__scale', {
+                    property: 'scale',
+                    from: character.scale,
+                    to: "0.17 0.17 0.17",
+                    dur: 300,
+                    dir: 'alternate',
+                    loop: 2
+                });
+            }
+            
+            // Animação das setas
+            function animateArrows(direction) {
+                const arrowId = direction === 'left' ? 'left-arrow' : 'right-arrow';
+                const arrow = document.getElementById(arrowId);
+                
+                arrow.setAttribute('animation__click', {
+                    property: 'position',
+                    from: direction === 'left' ? '-2.5 1.2 -5' : '2.5 1.2 -5',
+                    to: direction === 'left' ? '-2.7 1.2 -5' : '2.7 1.2 -5',
+                    dur: 300,
+                    dir: 'alternate',
+                    loop: 2
+                });
+            }
+            
+            // Sistema de clima otimizado (chuva/neve)
+            function initWeatherSystem() {
+                try {
+                    const weatherSystem = document.getElementById('weather-system');
+                    const numParticles = 100; // Número otimizado para performance
+                    let isSnowMode = false;
+                    let weatherInterval;
+                    
+                    // Criar partículas reutilizáveis
+                    for (let i = 0; i < numParticles; i++) {
+                        const particle = document.createElement('a-entity');
+                        particle.setAttribute('id', `particle-${i}`);
+                        
+                        // Configuração inicial (chuva)
+                        particle.setAttribute('geometry', {
+                            primitive: 'box',
+                            width: 0.02,
+                            height: 0.2, // Formato de risco alongado para chuva
+                            depth: 0.02
+                        });
+                        
+                        particle.setAttribute('material', {
+                            color: '#aaccff',
+                            transparent: true,
+                            opacity: 0.7
+                        });
+                        
+                        particle.setAttribute('visible', false);
+                        weatherSystem.appendChild(particle);
+                    }
+                    
+                    // Função para ativar uma partícula
+                    function activateParticle(particleId) {
+                        const particle = document.getElementById(`particle-${particleId}`);
+                        if (!particle) return;
+                        
+                        // Posição aleatória no topo da cena
+                        const x = Math.random() * 40 - 20; // -20 a 20
+                        const z = Math.random() * 40 - 20; // -20 a 20
+                        const startY = 15; // Começa no alto
+                        
+                        particle.setAttribute('position', {x: x, y: startY, z: z});
+                        particle.setAttribute('visible', true);
+                        
+                        if (isSnowMode) {
+                            // Modo neve: queda lenta com rotação
+                            particle.setAttribute('geometry', {
+                                primitive: 'box',
+                                width: 0.08,
+                                height: 0.08, // Cubo para floco de neve
+                                depth: 0.08
+                            });
+                            
+                            particle.setAttribute('material', {
+                                color: '#ffffff',
+                                transparent: true,
+                                opacity: 0.8
+                            });
+                            
+                            // Animação de queda lenta com rotação
+                            particle.setAttribute('animation', {
+                                property: 'position',
+                                to: `${x} -5 ${z}`,
+                                dur: 10000 + Math.random() * 4000, // 8-12 segundos
+                                easing: 'linear'
+                            });
+                            
+                            particle.setAttribute('animation__rotation', {
+                                property: 'rotation',
+                                to: `${Math.random() * 360} ${Math.random() * 360} ${Math.random() * 360}`,
+                                dur: 5000 + Math.random() * 3000,
+                                loop: true,
+                                easing: 'linear'
+                            });
+                            
+                            // Reposicionar após a queda
+                            setTimeout(() => {
+                                if (particle.getAttribute('visible')) {
+                                    particle.setAttribute('visible', false);
+                                    setTimeout(() => activateParticle(particleId), 100);
+                                }
+                            }, 8500 + Math.random() * 4000);
+                            
+                        } else {
+                            // Modo chuva: queda rápida em linha reta
+                            particle.setAttribute('geometry', {
+                                primitive: 'box',
+                                width: 0.02,
+                                height: 0.2, // Formato de risco
+                                depth: 0.02
+                            });
+                            
+                            particle.setAttribute('material', {
+                                color: '#aaccff',
+                                transparent: true,
+                                opacity: 0.7
+                            });
+                            
+                            // Animação de queda rápida
+                            particle.setAttribute('animation', {
+                                property: 'position',
+                                to: `${x} -5 ${z}`,
+                                dur: 2000 + Math.random() * 500, // 1-1.5 segundos
+                                easing: 'linear'
+                            });
+                            
+                            // Reposicionar após a queda
+                            setTimeout(() => {
+                                if (particle.getAttribute('visible')) {
+                                    particle.setAttribute('visible', false);
+                                    setTimeout(() => activateParticle(particleId), 50);
+                                }
+                            }, 1100 + Math.random() * 500);
+                        }
+                    }
+                    
+                    // Função para alternar entre chuva e neve
+                    function toggleWeatherMode() {
+                        isSnowMode = !isSnowMode;
+                        
+                        // Limpar todas as partículas
+                        for (let i = 0; i < numParticles; i++) {
+                            const particle = document.getElementById(`particle-${i}`);
+                            if (particle) {
+                                particle.setAttribute('visible', false);
+                                particle.removeAttribute('animation');
+                                particle.removeAttribute('animation__rotation');
+                            }
+                        }
+                        
+                        // Reiniciar o sistema com o novo modo
+                        startWeatherSystem();
+                    }
+                    
+                    // Função para iniciar o sistema de clima
+                    function startWeatherSystem() {
+                        // Ativar partículas gradualmente
+                        for (let i = 0; i < numParticles; i++) {
+                            setTimeout(() => {
+                                activateParticle(i);
+                            }, i * (isSnowMode ? 200 : 50)); // Espaçamento diferente para cada modo
+                        }
+                        
+                        // Alternar entre modos a cada 10 segundos
+                        weatherInterval = setInterval(toggleWeatherMode, 10000);
+                    }
+                    
+                    // Iniciar o sistema (começa com chuva)
+                    startWeatherSystem();
+                    
+                } catch (error) {
+                    console.warn('Sistema de clima não pôde ser inicializado:', error);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
